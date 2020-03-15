@@ -8,6 +8,7 @@ from lama.modules import build_model_by_name
 from tqdm import tqdm
 import argparse
 import spacy
+import pdb
 import lama.modules.base_connector as base
 
 
@@ -65,14 +66,14 @@ LOWERCASED_MODELS = [
    # "BERT BASE UNCASED"
    "lm": "bert",
    "bert_model_name": "bert-base-uncased",
-   "bert_model_dir": None,
+   "bert_model_dir": "pre-trained_language_models/bert/uncased_L-12_H-768_A-12/",
    "bert_vocab_name": "vocab.txt"
  },
  {
    # "BERT LARGE UNCASED"
    "lm": "bert",
    "bert_model_name": "bert-large-uncased",
-   "bert_model_dir": None,
+   "bert_model_dir": "pre-trained_language_models/bert/uncased_L-24_H-1024_A-16/",
    "bert_vocab_name": "vocab.txt"
  },
  {
@@ -80,7 +81,23 @@ LOWERCASED_MODELS = [
    "lm": "gpt",
    "gpt_model_dir": None,
    "gpt_model_name": "openai-gpt"
- }
+ },
+ {
+   # "RoBerta BASE"
+   "lm": "roberta",
+   "roberta_model_dir": "pre-trained_language_models/roberta/roberta.base/",
+   "roberta_model_name": "model.pt",
+   "roberta_vocab_name": None,
+   "max_sentence_length": 100
+ },
+ {
+   # "RoBerta LARGE"
+   "lm": "roberta",
+   "roberta_model_dir": "pre-trained_language_models/roberta/roberta.large/",
+   "roberta_model_name": "model.pt",
+   "roberta_vocab_name": None,
+   "max_sentence_length": 100
+ },
 ]
 
 LOWERCASED_COMMON_VOCAB_FILENAME = "pre-trained_language_models/common_vocab_lowercased.txt"
@@ -151,7 +168,7 @@ def main():
     # cased version
     __vocab_intersection(CASED_MODELS, CASED_COMMON_VOCAB_FILENAME)
     # lowercased version
-    __vocab_intersection(LOWERCASED_MODELS, LOWERCASED_COMMON_VOCAB_FILENAME)
+    #__vocab_intersection(LOWERCASED_MODELS, LOWERCASED_COMMON_VOCAB_FILENAME)
 
 
 if __name__ == '__main__':

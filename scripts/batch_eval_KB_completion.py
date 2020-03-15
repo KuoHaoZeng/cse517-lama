@@ -200,13 +200,22 @@ def run_thread_negated(arguments):
 def lowercase_samples(samples, use_negated_probes=False):
     new_samples = []
     for sample in samples:
-        sample["obj_label"] = sample["obj_label"].lower()
-        sample["sub_label"] = sample["sub_label"].lower()
+        if "obj_label" in sample.keys():
+            sample["obj_label"] = sample["obj_label"].lower()
+        if "sub_label" in sample.keys():
+            sample["sub_label"] = sample["sub_label"].lower()
         lower_masked_sentences = []
-        for sentence in sample["masked_sentences"]:
-            sentence = sentence.lower()
-            sentence = sentence.replace(base.MASK.lower(), base.MASK)
-            lower_masked_sentences.append(sentence)
+        if "masked_sentences" in sample.keys():
+            for sentence in sample["masked_sentences"]:
+                sentence = sentence.lower()
+                sentence = sentence.replace(base.MASK.lower(), base.MASK)
+                lower_masked_sentences.append(sentence)
+        else:
+            for evidence in sample["evidences"]:
+                for sentence in evidence["masked_sentence"]:
+                    sentence = sentence.lower()
+                    sentence = sentence.replace(base.MASK.lower(), base.MASK)
+                    lower_masked_sentences.append(sentence)
         sample["masked_sentences"] = lower_masked_sentences
 
         if "negated" in sample and use_negated_probes:
@@ -604,7 +613,7 @@ def main(args, shuffle_data=True, model=None):
             # print()
 
             if args.use_negated_probes:
-                spearman, overlap, msg = res_negated[idx]
+                overlap, spearman, msg = res_negated[idx]
                 # sum overlap and spearmanr if not nan
                 if spearman == spearman:
                     element["spearmanr"] = spearman
@@ -647,11 +656,12 @@ def main(args, shuffle_data=True, model=None):
 
     # stats
     # Mean reciprocal rank
-    MRR /= len(list_of_results)
+    if len(list_of_results) > 0:
+        MRR /= len(list_of_results)
 
-    # Precision
-    Precision /= len(list_of_results)
-    Precision1 /= len(list_of_results)
+        # Precision
+        Precision /= len(list_of_results)
+        Precision1 /= len(list_of_results)
 
     msg = "all_samples: {}\n".format(len(all_samples))
     msg += "list_of_results: {}\n".format(len(list_of_results))
@@ -665,8 +675,8 @@ def main(args, shuffle_data=True, model=None):
         msg += "\n"
         msg += "results negation:\n"
         msg += "all_negated_samples: {}\n".format(int(num_valid_negation))
-        msg += "global spearman rank affirmative/negated: {}\n".format(Overlap)
-        msg += "global overlap at 1 affirmative/negated: {}\n".format(Spearman)
+        msg += "global spearman rank affirmative/negated: {}\n".format(Spearman)
+        msg += "global overlap at 1 affirmative/negated: {}\n".format(Overlap)
 
     if samples_with_negative_judgement > 0 and samples_with_positive_judgement > 0:
         # Google-RE specific
@@ -690,7 +700,7 @@ def main(args, shuffle_data=True, model=None):
 
     # dump pickle with the result of the experiment
     all_results = dict(
-        list_of_results=list_of_results, global_MRR=MRR, global_P_at_10=Precision
+        list_of_results=list_of_results, global_MRR=MRR, global_P_at_10=Precision, global_P_at_1=Precision1
     )
     with open("{}/result.pkl".format(log_directory), "wb") as f:
         pickle.dump(all_results, f)

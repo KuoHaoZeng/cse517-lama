@@ -15,7 +15,6 @@ DST_DIR="$ROOD_DIR/pre-trained_language_models"
 mkdir -p "$DST_DIR"
 cd "$DST_DIR"
 
-
 echo "lowercase models"
 echo "OpenAI GPT"
 if [[ ! -f gpt/openai-gpt/config.json ]]; then
@@ -59,8 +58,28 @@ if [[ ! -f bert/uncased_L-24_H-1024_A-16/bert_config.json ]]; then
   cd ../../
 fi
 
+echo "ROBERTA BASE"
+if [[ ! -f roberta/roberta.base/model.pt ]]; then
+  mkdir -p 'roberta'
+  cd roberta
+  wget -c "https://dl.fbaipublicfiles.com/fairseq/models/roberta.base.tar.gz"
+  tar -xzf roberta.base.tar.gz
+  rm roberta.base.tar.gz
+  cd ../
+fi
+
+echo "ROBERTA LARGE"
+if [[ ! -f roberta/roberta.large/model.pt ]]; then
+  cd roberta
+  wget -c "https://dl.fbaipublicfiles.com/fairseq/models/roberta.large.tar.gz"
+  tar -xzf roberta.large.tar.gz
+  rm roberta.large.tar.gz
+  cd ../
+fi
+
 
 echo 'cased models'
+
 echo 'Transformer XL'
 if [[ ! -f 'transformerxl/transfo-xl-wt103/config.json' ]]; then
   rm -rf 'transformerxl/transfo-xl-wt103'
@@ -135,6 +154,7 @@ fi
 cd "$ROOD_DIR"
 echo 'Building common vocab'
 if [ ! -f "$DST_DIR/common_vocab_cased.txt" ]; then
+  export PYTHONPATH=$PYTHONPATH:../LAMA
   python lama/vocab_intersection.py
 else
   echo 'Already exists. Run to re-build:'

@@ -4,10 +4,6 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 #
-import sys
-sys.path.append('../')
-sys.path.append('./')
-
 import argparse
 from batch_eval_KB_completion import main as run_evaluation
 from batch_eval_KB_completion import load_file
@@ -15,20 +11,54 @@ from lama.modules import build_model_by_name
 import pprint
 import statistics
 from os import listdir
-import os
+import os, sys
 from os.path import isfile, join
 from shutil import copyfile
 from collections import defaultdict
-import datetime
+
+uncased_LMs = [
+    {
+        "lm": "gpt",
+        "label": "gpt",
+        "models_names": ["gpt"],
+        "gpt_model_name": "openai-gpt",
+        "gpt_model_dir": None,
+    },
+    {
+        "lm": "roberta",
+        "label": "roberta_base",
+        "models_names": ["roberta"],
+        "roberta_model_name": "model.pt",
+        "roberta_model_dir": "pre-trained_language_models/roberta/roberta.base/",
+        "roberta_vocab_name": None,
+        "max_sentence_length": 100,
+    },
+    {
+        "lm": "roberta",
+        "label": "roberta_large",
+        "models_names": ["roberta"],
+        "roberta_model_name": "model.pt",
+        "roberta_model_dir": "pre-trained_language_models/roberta/roberta.large/",
+        "roberta_vocab_name": None,
+        "max_sentence_length": 100,
+    },
+    {
+        "lm": "bert",
+        "label": "bert_base",
+        "models_names": ["bert"],
+        "bert_model_name": "bert-base-uncased",
+        "bert_model_dir": "pre-trained_language_models/bert/uncased_L-12_H-768_A-12",
+    },
+    {
+        "lm": "bert",
+        "label": "bert_large",
+        "models_names": ["bert"],
+        "bert_model_name": "bert-large-uncased",
+        "bert_model_dir": "pre-trained_language_models/bert/uncased_L-24_H-1024_A-16",
+    },
+]
 
 LMs = [
-#    {
-#        "lm": "gpt",
-#        "label": "gpt",
-#        "models_names": ["gpt"],
-#        "gpt_model_dir": None,  # Use from huggingface
-#        "gpt_model_name": "openai-gpt",
-#    },
     {
         "lm": "transformerxl",
         "label": "transformerxl",
@@ -75,7 +105,6 @@ def run_experiments(
     relations,
     data_path_pre,
     data_path_post,
-    dataset_name,
     input_param={
         "lm": "bert",
         "label": "bert_large",
@@ -83,6 +112,7 @@ def run_experiments(
         "bert_model_name": "bert-large-cased",
         "bert_model_dir": "pre-trained_language_models/bert/cased_L-24_H-1024_A-16",
     },
+    lowercase=False,
     use_negated_probes=False,
 ):
     model = None
@@ -92,7 +122,20 @@ def run_experiments(
     type_Precision1 = defaultdict(list)
     type_count = defaultdict(list)
 
-    results_file = open("last_results.csv", "w+")
+    if lowercase:
+        if use_negated_probes:
+            sub_logdir = "uncased_neg_results"
+            results_file = open("uncased_neg_last_results.csv", "w+")
+        else:
+            sub_logdir = "uncased_results"
+            results_file = open("uncased_last_results.csv", "w+")
+    else:
+        if use_negated_probes:
+            sub_logdir = "cased_neg_results"
+            results_file = open("neg_last_results.csv", "w+")
+        else:
+            sub_logdir = "cased_results"
+            results_file = open("last_results.csv", "w+")
 
     for relation in relations:
         pp.pprint(relation)
@@ -100,15 +143,15 @@ def run_experiments(
             "dataset_filename": "{}{}{}".format(
                 data_path_pre, relation["relation"], data_path_post
             ),
-            "common_vocab_filename": "pre-trained_language_models/common_vocab_cased.txt",
+            "common_vocab_filename": "pre-trained_language_models/common_vocab_lowercased.txt",
             "template": "",
             "bert_vocab_name": "vocab.txt",
-            "batch_size": 2,
+            "batch_size": 32,
             "logdir": "output",
-            "full_logdir": "output/results/{}/{}/{}".format(
-                input_param["label"], dataset_name, relation["relation"]
+            "full_logdir": "output/{}/{}/{}".format(
+                sub_logdir, input_param["label"], relation["relation"]
             ),
-            "lowercase": False,
+            "lowercase": True,
             "max_sentence_length": 100,
             "threads": -1,
             "interactive": False,
@@ -118,7 +161,12 @@ def run_experiments(
         if "template" in relation:
             PARAMETERS["template"] = relation["template"]
             if use_negated_probes:
-                PARAMETERS["template_negated"] = relation["template_negated"]
+                if "template_negated" in relation.keys():
+                    PARAMETERS["template_negated"] = relation["template_negated"]
+                else:
+                    print("No negated template in this dataset!")
+                    return
+                    
 
         PARAMETERS.update(input_param)
         print(PARAMETERS)
@@ -174,7 +222,7 @@ def get_TREx_parameters(data_path_pre="data/"):
     relations = load_file("{}relations.jsonl".format(data_path_pre))
     data_path_pre += "TREx/"
     data_path_post = ".jsonl"
-    return relations, data_path_pre, data_path_post, "TREx"
+    return relations, data_path_pre, data_path_post
 
 
 def get_GoogleRE_parameters():
@@ -197,44 +245,51 @@ def get_GoogleRE_parameters():
     ]
     data_path_pre = "data/Google_RE/"
     data_path_post = "_test.jsonl"
-    return relations, data_path_pre, data_path_post, "GoogleRE"
+    return relations, data_path_pre, data_path_post
 
 
 def get_ConceptNet_parameters(data_path_pre="data/"):
     relations = [{"relation": "test"}]
     data_path_pre += "ConceptNet/"
     data_path_post = ".jsonl"
-    return relations, data_path_pre, data_path_post, "ConceptNET"
+    return relations, data_path_pre, data_path_post
 
 
 def get_Squad_parameters(data_path_pre="data/"):
     relations = [{"relation": "test"}]
     data_path_pre += "Squad/"
     data_path_post = ".jsonl"
-    return relations, data_path_pre, data_path_post, "Squad"
+    return relations, data_path_pre, data_path_post
 
 
-def run_all_LMs(parameters):
-    for ip in LMs:
-        print(ip["label"], datetime.datetime.now())
-        run_experiments(*parameters, input_param=ip, use_negated_probes=False)
+def run_all_LMs(parameters, lowercase, use_negated_probes):
+    if lowercase:
+        for ip in uncased_LMs:
+            print(ip["label"])
+            run_experiments(*parameters, input_param=ip, lowercase=lowercase, use_negated_probes=use_negated_probes)
+    else:
+        for ip in LMs:
+            print(ip["label"])
+            run_experiments(*parameters, input_param=ip, lowercase=lowercase, use_negated_probes=use_negated_probes)
 
 
 if __name__ == "__main__":
+    lowercase = bool(sys.argv[1])
+    use_negated_probes = bool(sys.argv[2])
 
     print("1. Google-RE")
     parameters = get_GoogleRE_parameters()
-    run_all_LMs(parameters)
+    run_all_LMs(parameters, lowercase, use_negated_probes)
 
     print("2. T-REx")
     parameters = get_TREx_parameters()
-    run_all_LMs(parameters)
+    run_all_LMs(parameters, lowercase, use_negated_probes)
 
     print("3. ConceptNet")
     parameters = get_ConceptNet_parameters()
-    run_all_LMs(parameters)
+    run_all_LMs(parameters, lowercase, use_negated_probes)
 
     print("4. SQuAD")
     parameters = get_Squad_parameters()
-    run_all_LMs(parameters)
+    run_all_LMs(parameters, lowercase, use_negated_probes)
 
