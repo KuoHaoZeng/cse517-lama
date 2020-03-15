@@ -129,6 +129,7 @@ def run_experiments(
         else:
             sub_logdir = "uncased_results"
             results_file = open("uncased_last_results.csv", "w+")
+        voc_file = "common_vocab_lowercased.txt"
     else:
         if use_negated_probes:
             sub_logdir = "cased_neg_results"
@@ -136,6 +137,7 @@ def run_experiments(
         else:
             sub_logdir = "cased_results"
             results_file = open("last_results.csv", "w+")
+        voc_file = "common_vocab_cased.txt"
 
     for relation in relations:
         pp.pprint(relation)
@@ -143,7 +145,7 @@ def run_experiments(
             "dataset_filename": "{}{}{}".format(
                 data_path_pre, relation["relation"], data_path_post
             ),
-            "common_vocab_filename": "pre-trained_language_models/common_vocab_lowercased.txt",
+            "common_vocab_filename": "pre-trained_language_models/{}".format(voc_file),
             "template": "",
             "bert_vocab_name": "vocab.txt",
             "batch_size": 32,
@@ -274,8 +276,8 @@ def run_all_LMs(parameters, lowercase, use_negated_probes):
 
 
 if __name__ == "__main__":
-    lowercase = bool(sys.argv[1])
-    use_negated_probes = bool(sys.argv[2])
+    lowercase = bool(int(sys.argv[1]))
+    use_negated_probes = bool(int(sys.argv[2]))
 
     print("1. Google-RE")
     parameters = get_GoogleRE_parameters()

@@ -71,13 +71,13 @@ chmod +x run_experiment/*.sh
 ./run_experiment/run_experiment_uncased.sh
 ```
 
-##### Run cased model on negated probes
+##### Run cased model with negated probes
 
 ```
 ./run_experiment/run_experiment_cased_neg.sh
 ```
 
-##### Run uncased model on negated probes
+##### Run uncased model with negated probes
 
 ```
 ./run_experiment/run_experiment_uncased_neg.sh
