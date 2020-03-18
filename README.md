@@ -71,18 +71,6 @@ chmod +x run_experiment/*.sh
 ./run_experiment/run_experiment_uncased.sh
 ```
 
-##### Run cased model with negated probes
-
-```
-./run_experiment/run_experiment_cased_neg.sh
-```
-
-##### Run uncased model with negated probes
-
-```
-./run_experiment/run_experiment_uncased_neg.sh
-```
-
 results will be logged in _output/_ and  _run_experiment/*.log_.
 
 ## Other versions of LAMA
