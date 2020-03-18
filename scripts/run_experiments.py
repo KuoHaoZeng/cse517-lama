@@ -148,12 +148,12 @@ def run_experiments(
             "common_vocab_filename": "pre-trained_language_models/{}".format(voc_file),
             "template": "",
             "bert_vocab_name": "vocab.txt",
-            "batch_size": 32,
+            "batch_size": 8,
             "logdir": "output",
             "full_logdir": "output/{}/{}/{}".format(
                 sub_logdir, input_param["label"], relation["relation"]
             ),
-            "lowercase": True,
+            "lowercase": lowercase,
             "max_sentence_length": 100,
             "threads": -1,
             "interactive": False,
@@ -183,9 +183,9 @@ def run_experiments(
             print("Exception: {}".format(e))
             continue
 
-        if model is None:
-            [model_type_name] = args.models_names
-            model = build_model_by_name(model_type_name, args)
+        #if model is None:
+        [model_type_name] = args.models_names
+        model = build_model_by_name(model_type_name, args)
 
         Precision1 = run_evaluation(args, shuffle_data=False, model=model)
         print("P@1 : {}".format(Precision1), flush=True)
